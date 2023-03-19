@@ -1,6 +1,6 @@
 package main
 import (
-  "tasks/term"
+  "github.com/pandasoli/goterm"
 )
 
 
@@ -21,7 +21,7 @@ func EditText(text *string, x int, end_callback func(x int)) {
     str := ""
 
     for str == "" {
-      str_, err := term.Getch()
+      str_, err := goterm.Getch()
       if err != nil { panic(err) }
 
       str = str_

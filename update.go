@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"tasks/term"
+	"github.com/pandasoli/goterm"
 )
 
 
@@ -11,9 +11,9 @@ func update(tasks *[]Task, initial_y, selected int) {
   y := initial_y + selected
 
   // I want to edit checked items without that line-through
-  term.GoToXY(5, y)
+  goterm.GoToXY(5, y)
   fmt.Print(task.Title)
-  term.GoToXY(5, y)
+  goterm.GoToXY(5, y)
 
   EditText(
     &task.Title,
@@ -21,9 +21,9 @@ func update(tasks *[]Task, initial_y, selected int) {
     func(x int) {
       render(*tasks, initial_y, selected)
 
-      term.GoToXY(5, y)
+      goterm.GoToXY(5, y)
       fmt.Print(task.Title)
-      term.GoToXY(5 + x, y)
+      goterm.GoToXY(5 + x, y)
     },
   )
 }

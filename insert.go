@@ -1,6 +1,6 @@
 package main
 import (
-  "tasks/term"
+  "github.com/pandasoli/goterm"
 )
 
 
@@ -16,14 +16,14 @@ func insert(tasks *[]Task, initial_y int, selected *int) {
   makeSpace(*tasks, &initial_y)
   render(*tasks, initial_y, *selected)
 
-  term.GoToXY(5, initial_y + *selected + 1)
+  goterm.GoToXY(5, initial_y + *selected + 1)
 
   EditText(
     &task.Title,
     0,
     func(x int) {
       render(*tasks, initial_y, *selected + 1)
-      term.GoToXY(5 + x, initial_y + *selected + 1)
+      goterm.GoToXY(5 + x, initial_y + *selected + 1)
     },
   )
 

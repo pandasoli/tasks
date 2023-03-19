@@ -2,7 +2,7 @@ package main
 import (
 	"fmt"
 
-	"tasks/term"
+	"github.com/pandasoli/goterm"
 )
 
 
@@ -16,20 +16,20 @@ func main() {
   if err != nil { panic(err) }
 
   // Set raw mode
-  termios, err := term.SetRawMode()
+  termios, err := goterm.SetRawMode()
   if err != nil { panic(err) }
 
   defer func() {
-    err := term.RestoreMode(termios)
+    err := goterm.RestoreMode(termios)
     if err != nil { panic(err) }
   }()
 
   // Render
-  initial_y, _, err := term.WhereXY()
+  initial_y, _, err := goterm.WhereXY()
   if err != nil { panic(err) }
   initial_y++
 
-  term.Block_blinking_cursor()
+  goterm.Blinking_Block_cursor()
 
   makeSpace(tasks, &initial_y)
   render(tasks, initial_y, 0)
@@ -43,7 +43,7 @@ func main() {
     str := ""
 
     for str == "" {
-      str, err = term.Getch()
+      str, err = goterm.Getch()
       if err != nil { panic(err) }
     }
 
@@ -78,6 +78,6 @@ func main() {
   if err != nil { panic(err) }
 
   // Go to the end
-  term.GoToXY(0, initial_y + getNeededSpace(tasks))
+  goterm.GoToXY(0, initial_y + getNeededSpace(tasks))
   fmt.Println()
 }

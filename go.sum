@@ -1,3 +1,5 @@
+github.com/pandasoli/goterm v0.1.1 h1:XlM8WBrlO6La8kT9Pnb9E1ntlpvbtok3IdIFSKt6KBA=
+github.com/pandasoli/goterm v0.1.1/go.mod h1:HapDi6GonKCPcfJO3AKHvE8FPQfyzEbYsA8MI4ljkPU=
 golang.org/x/sys v0.6.0 h1:MVltZSvRTcU2ljQOhs94SXPftV6DCNnZViHeQps87pQ=
 golang.org/x/sys v0.6.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=

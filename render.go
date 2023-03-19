@@ -3,7 +3,7 @@ import (
   "fmt"
   "strings"
 
-  "tasks/term"
+  "github.com/pandasoli/goterm"
 )
 
 
@@ -28,14 +28,14 @@ func getNeededSpace(tasks []Task) int {
 }
 
 func makeSpace(tasks []Task, initial_y *int) error {
-  w, h, err := term.GetWinSize()
+  w, h, err := goterm.GetWinSize()
   if err != nil { return err }
 
   usable_h := h - *initial_y
   needed_h := getNeededSpace(tasks)
 
   if usable_h < needed_h {
-    term.GoToXY(0, *initial_y)
+    goterm.GoToXY(0, *initial_y)
 
     for range make([]int, needed_h - usable_h) {
       fmt.Println(
@@ -54,7 +54,7 @@ func makeSpace(tasks []Task, initial_y *int) error {
 }
 
 func render(tasks []Task, initial_y int, selected int) error {
-  w, _, err := term.GetWinSize()
+  w, _, err := goterm.GetWinSize()
   if err != nil { return err }
 
   // Calculate help instructions stuff
@@ -70,7 +70,7 @@ func render(tasks []Task, initial_y int, selected int) error {
   h := getNeededSpace(tasks)
 
   for i := range make([]int, h) {
-    term.GoToXY(0, initial_y + i)
+    goterm.GoToXY(0, initial_y + i)
     fmt.Println(
       strings.Repeat(" ", w),
     )
@@ -78,7 +78,7 @@ func render(tasks []Task, initial_y int, selected int) error {
 
   // Print
   for i, task := range tasks {
-    term.GoToXY(1, initial_y + i)
+    goterm.GoToXY(1, initial_y + i)
     title := task.Title
 
     if task.Done {
@@ -94,17 +94,17 @@ func render(tasks []Task, initial_y int, selected int) error {
   }
 
   // Clear line after the last item
-  term.GoToXY(1, initial_y + len(tasks))
+  goterm.GoToXY(1, initial_y + len(tasks))
   fmt.Print(strings.Repeat(" ", w))
 
   // Show help instructions
   for i, line := range help_lines {
-    term.GoToXY(w - larger_help_line - 1, initial_y + i)
+    goterm.GoToXY(w - larger_help_line - 1, initial_y + i)
     fmt.Printf("\033[90m%s\033[0m", line)
   }
 
   // Go to the selected item
-  term.GoToXY(2, initial_y + selected)
+  goterm.GoToXY(2, initial_y + selected)
 
   return nil
 }
