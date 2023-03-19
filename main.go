@@ -36,7 +36,14 @@ func git() (string, error) {
 }
 
 func main() {
-  repoName, _ := git()
+  var repoName string
+  args := renderArgs()
+
+  repoName = args.Escope
+
+  if repoName == "" {
+    repoName, _ = git()
+  }
 
   tasks, err := ReadScoped(repoName)
   if err != nil { panic(err) }
