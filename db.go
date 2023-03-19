@@ -1,35 +1,50 @@
 package main
+
 import (
-  "os"
+  "io/ioutil"
+  "os/user"
+
 	"gopkg.in/yaml.v3"
 )
 
 
-func Read() ([]Task, error) {
-  file, err := os.Open("tasks.yml")
-  if err != nil { return nil, err }
-  defer file.Close()
+func ReadAll() (map[string][]Task, error) {
+  currentUser, err := user.Current()
+  if err != nil { panic(err) }
 
-  content := make([]byte, 1024)
-  count, err := file.Read(content)
-  if err != nil { return nil, err }
+  content, err := ioutil.ReadFile(currentUser.HomeDir + "/tasks.yml")
 
-  data := []Task {}
-  err = yaml.Unmarshal(content[:count], &data)
+  data := make(map[string][]Task)
+
+  err = yaml.Unmarshal(content, &data)
 
   return data, err
 }
 
-func Write(data []Task) error {
-  res, err := yaml.Marshal(data)
+func ReadScoped(escope string) ([]Task, error) {
+  data, err := ReadAll()
+  if err != nil { return []Task {}, err }
+
+  return data[escope], nil
+}
+
+func Write(data []Task, escope string) error {
+  alldata, err := ReadAll()
   if err != nil { return err }
 
-  file, err := os.Create("tasks.yml")
-  if err != nil { return err }
-  defer file.Close()
+  if escope == "" {
+    escope = "global"
+  }
 
-  _, err = file.Write(res)
+  alldata[escope] = data
+
+  res, err := yaml.Marshal(alldata)
   if err != nil { return err }
 
-  return nil
+  currentUser, err := user.Current()
+  if err != nil { panic(err) }
+
+  err = ioutil.WriteFile(currentUser.HomeDir + "/tasks.yml", res, 0644)
+
+  return err
 }

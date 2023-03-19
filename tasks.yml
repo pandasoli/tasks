@@ -1,4 +1,5 @@
-- title: don't let go of the width to terminal
-  done: false
-- title: Add z-index
-  done: true
+tasks:
+    - title: don't let go of the width to terminal
+      done: true
+    - title: Add z-index
+      done: true

@@ -6,34 +6,34 @@ import (
 
 func insert(tasks *[]Task, initial_y int, selected *int) {
   new_tasks := make([]Task, 0, len(*tasks) + 1)
-  new_tasks = append(new_tasks, (*tasks)[:*selected + 1]...)
+  new_tasks = append(new_tasks, (*tasks)[:*selected]...)
   new_tasks = append(new_tasks, Task {})
-  new_tasks = append(new_tasks, (*tasks)[*selected + 1:]...)
+  *selected = len(new_tasks) - 1
+  new_tasks = append(new_tasks, (*tasks)[*selected:]...)
 
   *tasks = new_tasks
-  task := &(*tasks)[*selected + 1]
+  task := &(*tasks)[*selected]
 
   makeSpace(*tasks, &initial_y)
   render(*tasks, initial_y, *selected)
 
-  goterm.GoToXY(5, initial_y + *selected + 1)
+  goterm.GoToXY(5, initial_y + *selected)
 
   EditText(
     &task.Title,
     0,
     func(x int) {
-      render(*tasks, initial_y, *selected + 1)
-      goterm.GoToXY(5 + x, initial_y + *selected + 1)
+      render(*tasks, initial_y, *selected)
+      goterm.GoToXY(5 + x, initial_y + *selected)
     },
   )
 
   if len(task.Title) == 0 {
     new_tasks := make([]Task, 0, len(*tasks) - 1)
-    new_tasks = append(new_tasks, (*tasks)[:*selected + 1]...)
-    new_tasks = append(new_tasks, (*tasks)[*selected + 2:]...)
+    new_tasks = append(new_tasks, (*tasks)[:*selected]...)
+    new_tasks = append(new_tasks, (*tasks)[*selected + 1:]...)
 
     *tasks = new_tasks
-  } else {
-    *selected++
+    *selected--
   }
 }

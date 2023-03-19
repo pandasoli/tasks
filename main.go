@@ -1,6 +1,11 @@
 package main
+
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"path"
+	"strings"
 
 	"github.com/pandasoli/goterm"
 )
@@ -11,8 +16,29 @@ type Task struct {
   Done bool
 }
 
+func git() (string, error) {
+  fi, err := os.Stat(".git")
+  if err != nil { return "", err }
+
+  if fi.IsDir() {
+    cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+    out, err := cmd.Output()
+    if err != nil { return "", err }
+
+    repoName := string(out)
+    repoName = strings.TrimSpace(repoName)
+    repoName = path.Base(repoName)
+
+    return repoName, nil
+  }
+
+  return "", fmt.Errorf(".git is not a directory")
+}
+
 func main() {
-  tasks, err := Read()
+  repoName, _ := git()
+
+  tasks, err := ReadScoped(repoName)
   if err != nil { panic(err) }
 
   // Set raw mode
@@ -66,7 +92,9 @@ func main() {
       case "u": update(&tasks, initial_y, selected)
 
       case "\n":
-        tasks[selected].Done = !tasks[selected].Done
+        if len(tasks) > 0 {
+          tasks[selected].Done = !tasks[selected].Done
+        }
     }
 
     err := render(tasks, initial_y, selected)
@@ -74,7 +102,7 @@ func main() {
   }
 
   // Save actions
-  err = Write(tasks)
+  err = Write(tasks, repoName)
   if err != nil { panic(err) }
 
   // Go to the end
