@@ -6,12 +6,7 @@ import (
 )
 
 
-type Args struct {
-  Escope string
-}
-
-func renderArgs() Args {
-  var final_args Args
+func renderArgs() []string {
   var args []string
 
   if strings.Contains(os.Args[0], "/go-build") {
@@ -25,7 +20,5 @@ func renderArgs() Args {
 		args = os.Args[1:]
 	}
 
-  final_args.Escope = args[0]
-
-  return final_args
+  return args
 }

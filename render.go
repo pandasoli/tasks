@@ -6,48 +6,39 @@ import (
   "github.com/pandasoli/goterm"
 )
 
-
-var help_lines = []string {
-  "[i] insert item",
-  "[d] delete item",
-  "[z] restore deleted",
-  "[u] edit item",
-  "[enter] check item",
-  "[q] save and quit",
-}
-
 func getNeededSpace(tasks []Task) int {
-  // +1 because I clean the line after the last item
-  needed_h := len(tasks) + 1
+  var needed_h int
 
-  if needed_h < len(help_lines) {
-    needed_h = len(help_lines)
-  }
+  needed_h += len(tasks)
+  needed_h += 2 // Y space
 
   return needed_h
 }
 
 func makeSpace(tasks []Task, initial_y *int) error {
-  w, h, err := goterm.GetWinSize()
+  _, h, err := goterm.GetWinSize()
   if err != nil { return err }
 
-  usable_h := h - *initial_y
   needed_h := getNeededSpace(tasks)
 
-  if usable_h < needed_h {
+  if h < needed_h {
+    return fmt.Errorf("There's not the needed height. Needed: %d, have: %d", needed_h, h)
+  }
+
+  had_space := h - *initial_y
+
+  if needed_h > had_space {
+    missing_space := needed_h - had_space
+
     goterm.GoToXY(0, *initial_y)
-
-    for range make([]int, needed_h - usable_h) {
-      fmt.Println(
-        strings.Repeat(" ", w),
-      )
-
-      *initial_y--
-      usable_h++
+    for range make([]int, had_space) {
+      fmt.Println()
     }
 
-    //*initial_y -= needed_h - usable_h
-    //usable_h = needed_h
+    for range make([]int, missing_space) {
+      fmt.Println()
+      *initial_y--
+    }
   }
 
   return nil
@@ -57,54 +48,38 @@ func render(tasks []Task, initial_y int, selected int) error {
   w, _, err := goterm.GetWinSize()
   if err != nil { return err }
 
-  // Calculate help instructions stuff
-  larger_help_line := 0
-
-  for _, line := range help_lines {
-    if len(line) > larger_help_line {
-      larger_help_line = len(line)
-    }
-  }
-
   // Clear
   h := getNeededSpace(tasks)
+  goterm.GoToXY(0, initial_y)
 
-  for i := range make([]int, h) {
-    goterm.GoToXY(0, initial_y + i)
+  for range make([]int, h) {
     fmt.Println(
       strings.Repeat(" ", w),
     )
   }
 
+  goterm.GoToXY(0, initial_y)
+
+  // Add margin at top
+  fmt.Println()
+
   // Print
-  for i, task := range tasks {
-    goterm.GoToXY(1, initial_y + i)
+  for _, task := range tasks {
     title := task.Title
 
     if task.Done {
       title = "\033[9m" + title
-      fmt.Print("\033[1;34m[x]\033[0m")
+      fmt.Print(" \033[1;34m[x]\033[0m")
     } else {
-      fmt.Print("[ ]")
+      fmt.Print(" [ ]")
     }
 
-    // The space after the title is for when I delete a char when I'm creating a item
-    // thus I remove the char I just deleted from the screen.
-    fmt.Printf(" %s\033[0m ", title)
-  }
-
-  // Clear line after the last item
-  goterm.GoToXY(1, initial_y + len(tasks))
-  fmt.Print(strings.Repeat(" ", w))
-
-  // Show help instructions
-  for i, line := range help_lines {
-    goterm.GoToXY(w - larger_help_line - 1, initial_y + i)
-    fmt.Printf("\033[90m%s\033[0m", line)
+    fmt.Printf(" %s\033[0m\n", title)
   }
 
   // Go to the selected item
-  goterm.GoToXY(2, initial_y + selected)
+  // +1 because of the margin
+  goterm.GoToXY(2, initial_y + selected + 1)
 
   return nil
 }

@@ -39,9 +39,32 @@ func main() {
   var repoName string
   args := renderArgs()
 
-  repoName = args.Escope
+  if len(args) > 0 {
+    if args[0] == "help" {
+      lines := []string {
+        "",
+        "     \033[1mTasks\033[0m",
+        "",
+        "[i] insert new item",
+        "[u] update item",
+        "[d] delete item",
+        "[z] undo",
+        "[enter] check item",
+        "[arrow up] select top item",
+        "[arrow down] select item and bass",
+        "[q] save and exit",
+        "",
+      }
 
-  if repoName == "" {
+      for _, line := range lines {
+        fmt.Println(line)
+      }
+
+      return
+    } else {
+      repoName = args[0]
+    }
+  } else {
     repoName, _ = git()
   }
 
@@ -60,7 +83,6 @@ func main() {
   // Render
   initial_y, _, err := goterm.WhereXY()
   if err != nil { panic(err) }
-  initial_y++
 
   goterm.Blinking_Block_cursor()
 
@@ -73,29 +95,29 @@ func main() {
   selected := 0
 
   for !quit {
-    str := ""
-
-    for str == "" {
-      str, err = goterm.Getch()
-      if err != nil { panic(err) }
-    }
+    str, err := goterm.Getch()
+    if err != nil { panic(err) }
 
     switch str {
       case "q": quit = true
       case "\033[A": if selected > 0 { selected-- }
       case "\033[B": if selected < len(tasks) - 1 { selected++ }
       case "d":
-        deleteds = append(deleteds, tasks[selected])
-        tasks = append(tasks[:selected], tasks[selected + 1:]...)
+        if len(tasks) > 0 {
+          deleteds = append(deleteds, tasks[selected])
+          tasks = append(tasks[:selected], tasks[selected + 1:]...)
 
-        if selected == len(tasks) { selected-- }
+          if selected == len(tasks) && len(tasks) > 0 {
+            selected--
+          }
+        }
       case "z":
         if len(deleteds) > 0 {
           last_task := deleteds[len(deleteds) - 1]
           tasks = append(tasks, last_task)
           deleteds = append(deleteds[:len(deleteds) - 1])
         }
-      case "i": insert(&tasks, initial_y, &selected)
+      case "i": insert(&tasks, &initial_y, &selected)
       case "u": update(&tasks, initial_y, selected)
 
       case "\n":
@@ -104,7 +126,7 @@ func main() {
         }
     }
 
-    err := render(tasks, initial_y, selected)
+    err = render(tasks, initial_y, selected)
     if err != nil { panic(err) }
   }
 

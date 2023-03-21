@@ -8,7 +8,7 @@ import (
 
 func update(tasks *[]Task, initial_y, selected int) {
   task := &(*tasks)[selected]
-  y := initial_y + selected
+  y := initial_y + selected + 1 // +1 for top margin
 
   // I want to edit checked items without that line-through
   goterm.GoToXY(5, y)
@@ -17,7 +17,8 @@ func update(tasks *[]Task, initial_y, selected int) {
 
   EditText(
     &task.Title,
-    0,
+    y,
+    5,
     func(x int) {
       render(*tasks, initial_y, selected)
 
