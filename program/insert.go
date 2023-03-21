@@ -1,11 +1,11 @@
-package main
+package program
 
 import (
 	"github.com/pandasoli/goterm"
 )
 
 
-func getTaskY(escopes []Escope, initial_y, escopei, taski int) int {
+func GetTaskY(escopes []Escope, initial_y, escopei, taski int) int {
   res := initial_y + 1 // for top margin
 
   for escope_i, escope := range escopes {
@@ -20,7 +20,7 @@ func getTaskY(escopes []Escope, initial_y, escopei, taski int) int {
   return res
 }
 
-func insert(escopes *[]Escope, initial_y *int, selected *Selection) {
+func Insert(escopes *[]Escope, initial_y *int, selected *Selection) {
   tasks := &(*escopes)[selected.Escope].Tasks
 
   new_tasks := make([]Task, 0, len(*tasks) + 1)
@@ -32,10 +32,10 @@ func insert(escopes *[]Escope, initial_y *int, selected *Selection) {
   *tasks = new_tasks
   task := &(*tasks)[selected.Task]
 
-  makeSpace(*escopes, initial_y)
-  render(*escopes, *initial_y, *selected)
+  MakeSpace(*escopes, initial_y)
+  Render(*escopes, *initial_y, *selected)
 
-  tasky := getTaskY(*escopes, *initial_y, selected.Escope, selected.Task)
+  tasky := GetTaskY(*escopes, *initial_y, selected.Escope, selected.Task)
 
   goterm.GoToXY(10, tasky)
 
@@ -44,7 +44,7 @@ func insert(escopes *[]Escope, initial_y *int, selected *Selection) {
     tasky,
     9,
     func(x int) {
-      render(*escopes, *initial_y, *selected)
+      Render(*escopes, *initial_y, *selected)
       goterm.GoToXY(10 + x, tasky)
     },
   )

@@ -1,4 +1,4 @@
-package main
+package program
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 )
 
 
-func renderArgs() []string {
+func RenderArgs() []string {
   var args []string
 
   if strings.Contains(os.Args[0], "/go-build") {

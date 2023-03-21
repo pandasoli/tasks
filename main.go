@@ -7,25 +7,11 @@ import (
 	"path"
 	"strings"
 	"time"
+  . "tasks/program"
 
 	"github.com/pandasoli/goterm"
 )
 
-
-type Task struct {
-  Title string
-  Done bool
-}
-
-type Escope struct {
-  Title string
-  Tasks []Task
-}
-
-type Selection struct {
-  Escope,
-  Task int
-}
 
 func git() (string, error) {
   fi, err := os.Stat(".git")
@@ -48,7 +34,7 @@ func git() (string, error) {
 
 func main() {
   var repoName []string
-  args := renderArgs()
+  args := RenderArgs()
 
   if len(args) > 0 {
     if args[0] == "help" {
@@ -102,8 +88,8 @@ func main() {
 
   goterm.Blinking_Block_cursor()
 
-  makeSpace(escopes, &initial_y)
-  render(escopes, initial_y, selected)
+  MakeSpace(escopes, &initial_y)
+  Render(escopes, initial_y, selected)
 
   // Features
   Features := map[string]func() {
@@ -133,7 +119,7 @@ func main() {
       if len(escopes) == 0 { return }
 
       task := escopes[selected.Escope].Tasks[selected.Task]
-      task_y := getTaskY(escopes, initial_y, selected.Escope, selected.Task)
+      task_y := GetTaskY(escopes, initial_y, selected.Escope, selected.Task)
 
       // Animation
       animation_time := time.Duration(30)
@@ -220,7 +206,7 @@ func main() {
       deleteds = new_deletes
 
       // Animation
-      task_y := getTaskY(escopes, initial_y, selected.Escope, len(escopes[escope_i].Tasks) - 1)
+      task_y := GetTaskY(escopes, initial_y, selected.Escope, len(escopes[escope_i].Tasks) - 1)
       animation_time := time.Duration(30)
 
       goterm.HideCursor()
@@ -268,13 +254,13 @@ func main() {
       case "d": Features["DeleteTask"]()
       case "z": Features["RestoreTask"]()
 
-      case "i": insert(&escopes, &initial_y, &selected)
-      case "u": update(&escopes, &initial_y, selected)
+      case "i": Insert(&escopes, &initial_y, &selected)
+      case "u": Update(&escopes, &initial_y, selected)
 
       case "\n": Features["CheckTask"]()
     }
 
-    err = render(escopes, initial_y, selected)
+    err = Render(escopes, initial_y, selected)
     if err != nil { panic(err) }
   }
 
@@ -283,6 +269,6 @@ func main() {
   if err != nil { panic(err) }
 
   // Go to the end
-  goterm.GoToXY(0, initial_y + getNeededSpace(escopes))
+  goterm.GoToXY(0, initial_y + GetNeededSpace(escopes))
   fmt.Println()
 }

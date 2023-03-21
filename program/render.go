@@ -1,4 +1,5 @@
-package main
+package program
+
 import (
   "fmt"
   "strings"
@@ -6,7 +7,8 @@ import (
   "github.com/pandasoli/goterm"
 )
 
-func getNeededSpace(escopes []Escope) int {
+
+func GetNeededSpace(escopes []Escope) int {
   var needed_h int
 
   needed_h += len(escopes) // Escopes' title
@@ -19,11 +21,11 @@ func getNeededSpace(escopes []Escope) int {
   return needed_h
 }
 
-func makeSpace(escopes []Escope, initial_y *int) error {
+func MakeSpace(escopes []Escope, initial_y *int) error {
   _, h, err := goterm.GetWinSize()
   if err != nil { return err }
 
-  needed_h := getNeededSpace(escopes)
+  needed_h := GetNeededSpace(escopes)
 
   if h < needed_h {
     return fmt.Errorf("There's not the needed height. Needed: %d, have: %d", needed_h, h)
@@ -50,7 +52,7 @@ func makeSpace(escopes []Escope, initial_y *int) error {
   return nil
 }
 
-func render_task(task Task, cb_cl, tl_cl int) {
+func Render_task(task Task, cb_cl, tl_cl int) {
   title := task.Title
   cb := fmt.Sprintf("    \033[3%dm[ ]\033[0m", cb_cl)
 
@@ -62,12 +64,12 @@ func render_task(task Task, cb_cl, tl_cl int) {
   fmt.Printf(" %s %s\033[0m\n", cb, title)
 }
 
-func render(escopes []Escope, initial_y int, selected Selection) error {
+func Render(escopes []Escope, initial_y int, selected Selection) error {
   w, _, err := goterm.GetWinSize()
   if err != nil { return err }
 
   // Clear
-  h := getNeededSpace(escopes)
+  h := GetNeededSpace(escopes)
   goterm.GoToXY(0, initial_y)
 
   for range make([]int, h) {
@@ -86,14 +88,14 @@ func render(escopes []Escope, initial_y int, selected Selection) error {
     fmt.Printf("  \033[1;34m%s\033[0m\n", escope.Title)
 
     for _, task := range escope.Tasks {
-      render_task(task, 4, 7)
+      Render_task(task, 4, 7)
     }
 
     fmt.Println()
   }
 
   // Go to the selected item
-  selection_y := getTaskY(escopes, initial_y, selected.Escope, selected.Task)
+  selection_y := GetTaskY(escopes, initial_y, selected.Escope, selected.Task)
   goterm.GoToXY(6, selection_y)
 
   return nil

@@ -1,4 +1,4 @@
-package main
+package program
 
 import (
   "io/ioutil"
@@ -27,7 +27,7 @@ func ReadScopes(escopes []string) ([]Escope, error) {
   if err != nil { return nil, err }
 
   for _, escope := range data {
-    if containsString(escopes, escope.Title) {
+    if ContainsString(escopes, escope.Title) {
       res = append(res, escope)
     }
   }
