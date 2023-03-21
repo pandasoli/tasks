@@ -6,25 +6,24 @@ import (
 )
 
 
-func update(tasks *[]Task, initial_y, selected int) {
-  task := &(*tasks)[selected]
-  y := initial_y + selected + 1 // +1 for top margin
+func update(escopes *[]Escope, initial_y *int, selected Selection) {
+  task := &(*escopes)[selected.Escope].Tasks[selected.Task]
+  y := getTaskY(*escopes, *initial_y, selected.Escope, selected.Task)
 
   // I want to edit checked items without that line-through
-  goterm.GoToXY(5, y)
+  goterm.GoToXY(10, y)
   fmt.Print(task.Title)
-  goterm.GoToXY(5, y)
 
   EditText(
     &task.Title,
     y,
-    5,
+    9,
     func(x int) {
-      render(*tasks, initial_y, selected)
+      render(*escopes, *initial_y, selected)
 
-      goterm.GoToXY(5, y)
+      goterm.GoToXY(10, y)
       fmt.Print(task.Title)
-      goterm.GoToXY(5 + x, y)
+      goterm.GoToXY(10 + x, y)
     },
   )
 }

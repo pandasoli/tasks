@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/pandasoli/goterm"
 )
@@ -14,6 +15,16 @@ import (
 type Task struct {
   Title string
   Done bool
+}
+
+type Escope struct {
+  Title string
+  Tasks []Task
+}
+
+type Selection struct {
+  Escope,
+  Task int
 }
 
 func git() (string, error) {
@@ -36,7 +47,7 @@ func git() (string, error) {
 }
 
 func main() {
-  var repoName string
+  var repoName []string
   args := renderArgs()
 
   if len(args) > 0 {
@@ -62,13 +73,14 @@ func main() {
 
       return
     } else {
-      repoName = args[0]
+      repoName = args
     }
   } else {
-    repoName, _ = git()
+    repo, _ := git()
+    repoName = []string { repo }
   }
 
-  tasks, err := ReadScoped(repoName)
+  escopes, err := ReadScopes(repoName)
   if err != nil { panic(err) }
 
   // Set raw mode
@@ -80,61 +92,197 @@ func main() {
     if err != nil { panic(err) }
   }()
 
+  // Some vars
+  deleteds := []Escope {}
+  selected := Selection {}
+
   // Render
   initial_y, _, err := goterm.WhereXY()
   if err != nil { panic(err) }
 
   goterm.Blinking_Block_cursor()
 
-  makeSpace(tasks, &initial_y)
-  render(tasks, initial_y, 0)
+  makeSpace(escopes, &initial_y)
+  render(escopes, initial_y, selected)
+
+  // Features
+  Features := map[string]func() {
+    "GoUp": func() {
+      if selected.Task > 0 {
+        selected.Task--
+      } else if selected.Escope > 0 {
+        selected.Escope--
+        selected.Task = len(escopes[selected.Escope].Tasks) - 1
+      }
+    },
+    "GoDown": func() {
+      if selected.Task < len(escopes[selected.Escope].Tasks) - 1 {
+        selected.Task++
+      } else if selected.Escope < len(escopes) - 1 {
+        selected.Escope++
+        selected.Task = 0
+      }
+    },
+    "CheckTask": func() {
+      if len(escopes) == 0 { return }
+
+      task := &escopes[selected.Escope].Tasks[selected.Task]
+      task.Done = !task.Done
+    },
+    "DeleteTask": func() {
+      if len(escopes) == 0 { return }
+
+      task := escopes[selected.Escope].Tasks[selected.Task]
+      task_y := getTaskY(escopes, initial_y, selected.Escope, selected.Task)
+
+      // Animation
+      animation_time := time.Duration(30)
+      goterm.HideCursor()
+
+      cb := "[ ]"
+      if task.Done { cb = "[x]" }
+      if len(task.Title) >= 30 { animation_time = time.Duration(10) }
+
+      for i := range cb {
+        goterm.GoToXY(5 + i, task_y)
+        fmt.Printf("\033[31m%c\033[0m", cb[i])
+        time.Sleep(time.Millisecond * animation_time)
+      }
+
+      time.Sleep(time.Millisecond * animation_time) // for the space between
+
+      for i := range task.Title {
+        style := "\033[31m"
+
+        if task.Done {
+          style += "\033[9m"
+        }
+
+        goterm.GoToXY(9 + i, task_y)
+        fmt.Printf("%s%c\033[0m", style, task.Title[i])
+        time.Sleep(time.Millisecond * animation_time)
+      }
+
+      // Do
+      escope := escopes[selected.Escope]
+      escope.Tasks = []Task { task }
+
+      deleteds = append(deleteds, escope)
+      escopes[selected.Escope].Tasks = append(
+        escopes[selected.Escope].Tasks[:selected.Task],
+        escopes[selected.Escope].Tasks[selected.Task + 1:]...,
+      )
+
+      if selected.Task == len(escopes[selected.Escope].Tasks) && len(escopes) > 0 {
+        selected.Task--
+      }
+
+      // Animation
+      for i := range task.Title {
+        goterm.GoToXY(8 + len(task.Title) - i, task_y)
+        fmt.Print(" ")
+        time.Sleep(time.Millisecond * animation_time)
+      }
+
+      time.Sleep(time.Millisecond * animation_time) // for the space between
+
+      for i := range cb {
+        goterm.GoToXY(5 + len(cb) - i, task_y)
+        fmt.Print(" ")
+        time.Sleep(time.Millisecond * animation_time)
+      }
+
+      goterm.ShowCursor()
+    },
+    "RestoreTask": func() {
+      if len(deleteds) == 0 { return }
+
+      last_escope := deleteds[len(deleteds) - 1]
+      task := last_escope.Tasks[0]
+      escope_i := -1
+
+      for i, escope := range escopes {
+        if escope.Title == last_escope.Title {
+          escope_i = i
+          break
+        }
+      }
+
+      if escope_i == -1 {
+        escopes = append(escopes, last_escope)
+      } else {
+        escopes[escope_i].Tasks = append(escopes[escope_i].Tasks, task)
+      }
+
+      new_deletes := make([]Escope, 0, len(deleteds) - 1)
+      new_deletes = append(new_deletes, deleteds[:len(deleteds) - 1]...)
+
+      deleteds = new_deletes
+
+      // Animation
+      task_y := getTaskY(escopes, initial_y, selected.Escope, len(escopes[escope_i].Tasks) - 1)
+      animation_time := time.Duration(30)
+
+      goterm.HideCursor()
+
+      cb := "[ ]"
+      if task.Done { cb = "[x]" }
+      if len(task.Title) >= 30 { animation_time = time.Duration(10) }
+
+      for i := range cb {
+        goterm.GoToXY(5 + i, task_y)
+        fmt.Printf("\033[34m%c\033[0m", cb[i])
+        time.Sleep(time.Millisecond * animation_time)
+      }
+
+      time.Sleep(time.Millisecond * animation_time) // for the space between
+
+      for i := range task.Title {
+        style := "\033[37m"
+
+        if task.Done {
+          style += "\033[9m"
+        }
+
+        goterm.GoToXY(9 + i, task_y)
+        fmt.Printf("%s%c\033[0m", style, task.Title[i])
+        time.Sleep(time.Millisecond * animation_time)
+      }
+
+      goterm.ShowCursor()
+    },
+  }
 
   // Main loop
   quit := false
-  deleteds := []Task {}
-  selected := 0
 
   for !quit {
     str, err := goterm.Getch()
     if err != nil { panic(err) }
 
     switch str {
+      case "\033[A" /* Up arrow */: Features["GoUp"]()
+      case "\033[B" /* Down arrow */: Features["GoDown"]()
+
       case "q": quit = true
-      case "\033[A": if selected > 0 { selected-- }
-      case "\033[B": if selected < len(tasks) - 1 { selected++ }
-      case "d":
-        if len(tasks) > 0 {
-          deleteds = append(deleteds, tasks[selected])
-          tasks = append(tasks[:selected], tasks[selected + 1:]...)
+      case "d": Features["DeleteTask"]()
+      case "z": Features["RestoreTask"]()
 
-          if selected == len(tasks) && len(tasks) > 0 {
-            selected--
-          }
-        }
-      case "z":
-        if len(deleteds) > 0 {
-          last_task := deleteds[len(deleteds) - 1]
-          tasks = append(tasks, last_task)
-          deleteds = append(deleteds[:len(deleteds) - 1])
-        }
-      case "i": insert(&tasks, &initial_y, &selected)
-      case "u": update(&tasks, initial_y, selected)
+      case "i": insert(&escopes, &initial_y, &selected)
+      case "u": update(&escopes, &initial_y, selected)
 
-      case "\n":
-        if len(tasks) > 0 {
-          tasks[selected].Done = !tasks[selected].Done
-        }
+      case "\n": Features["CheckTask"]()
     }
 
-    err = render(tasks, initial_y, selected)
+    err = render(escopes, initial_y, selected)
     if err != nil { panic(err) }
   }
 
   // Save actions
-  err = Write(tasks, repoName)
+  err = Write(escopes)
   if err != nil { panic(err) }
 
   // Go to the end
-  goterm.GoToXY(0, initial_y + getNeededSpace(tasks))
+  goterm.GoToXY(0, initial_y + getNeededSpace(escopes))
   fmt.Println()
 }

@@ -6,20 +6,24 @@ import (
   "github.com/pandasoli/goterm"
 )
 
-func getNeededSpace(tasks []Task) int {
+func getNeededSpace(escopes []Escope) int {
   var needed_h int
 
-  needed_h += len(tasks)
+  needed_h += len(escopes) // Escopes' title
   needed_h += 2 // Y space
+
+  for _, escope := range escopes {
+    needed_h += len(escope.Tasks) + 1 // +1 for spacing
+  }
 
   return needed_h
 }
 
-func makeSpace(tasks []Task, initial_y *int) error {
+func makeSpace(escopes []Escope, initial_y *int) error {
   _, h, err := goterm.GetWinSize()
   if err != nil { return err }
 
-  needed_h := getNeededSpace(tasks)
+  needed_h := getNeededSpace(escopes)
 
   if h < needed_h {
     return fmt.Errorf("There's not the needed height. Needed: %d, have: %d", needed_h, h)
@@ -30,26 +34,40 @@ func makeSpace(tasks []Task, initial_y *int) error {
   if needed_h > had_space {
     missing_space := needed_h - had_space
 
-    goterm.GoToXY(0, *initial_y)
-    for range make([]int, had_space) {
+    // goterm.GoToXY(0, *initial_y)
+    // for range make([]int, had_space) {
+    //   fmt.Println()
+    // }
+
+    goterm.GoToXY(0, h)
+    for range make([]int, missing_space) {
       fmt.Println()
     }
 
-    for range make([]int, missing_space) {
-      fmt.Println()
-      *initial_y--
-    }
+    *initial_y -= missing_space
   }
 
   return nil
 }
 
-func render(tasks []Task, initial_y int, selected int) error {
+func render_task(task Task, cb_cl, tl_cl int) {
+  title := task.Title
+  cb := fmt.Sprintf("    \033[3%dm[ ]\033[0m", cb_cl)
+
+  if task.Done {
+    title = fmt.Sprintf("\033[3%d;9m%s", tl_cl, title)
+    cb = fmt.Sprintf("    \033[3%dm[x]\033[0m", cb_cl)
+  }
+
+  fmt.Printf(" %s %s\033[0m\n", cb, title)
+}
+
+func render(escopes []Escope, initial_y int, selected Selection) error {
   w, _, err := goterm.GetWinSize()
   if err != nil { return err }
 
   // Clear
-  h := getNeededSpace(tasks)
+  h := getNeededSpace(escopes)
   goterm.GoToXY(0, initial_y)
 
   for range make([]int, h) {
@@ -64,22 +82,19 @@ func render(tasks []Task, initial_y int, selected int) error {
   fmt.Println()
 
   // Print
-  for _, task := range tasks {
-    title := task.Title
+  for _, escope := range escopes {
+    fmt.Printf("  \033[1;34m%s\033[0m\n", escope.Title)
 
-    if task.Done {
-      title = "\033[9m" + title
-      fmt.Print(" \033[1;34m[x]\033[0m")
-    } else {
-      fmt.Print(" [ ]")
+    for _, task := range escope.Tasks {
+      render_task(task, 4, 7)
     }
 
-    fmt.Printf(" %s\033[0m\n", title)
+    fmt.Println()
   }
 
   // Go to the selected item
-  // +1 because of the margin
-  goterm.GoToXY(2, initial_y + selected + 1)
+  selection_y := getTaskY(escopes, initial_y, selected.Escope, selected.Task)
+  goterm.GoToXY(6, selection_y)
 
   return nil
 }

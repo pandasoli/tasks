@@ -8,35 +8,45 @@ import (
 )
 
 
-func ReadAll() (map[string][]Task, error) {
+func ReadAll() ([]Escope, error) {
   currentUser, err := user.Current()
   if err != nil { panic(err) }
 
   content, err := ioutil.ReadFile(currentUser.HomeDir + "/tasks.yml")
 
-  data := make(map[string][]Task)
-
+  data := make([]Escope, 0, 254)
   err = yaml.Unmarshal(content, &data)
 
   return data, err
 }
 
-func ReadScoped(escope string) ([]Task, error) {
-  data, err := ReadAll()
-  if err != nil { return []Task {}, err }
+func ReadScopes(escopes []string) ([]Escope, error) {
+  var res []Escope
 
-  return data[escope], nil
+  data, err := ReadAll()
+  if err != nil { return nil, err }
+
+  for _, escope := range data {
+    if containsString(escopes, escope.Title) {
+      res = append(res, escope)
+    }
+  }
+
+  return res, nil
 }
 
-func Write(data []Task, escope string) error {
+func Write(data []Escope) error {
   alldata, err := ReadAll()
   if err != nil { return err }
 
-  if escope == "" {
-    escope = "global"
+  for _, new_escope := range data {
+    for i, old_scope := range alldata {
+      if old_scope.Title == new_escope.Title {
+        alldata[i].Tasks = new_escope.Tasks
+        break
+      }
+    }
   }
-
-  alldata[escope] = data
 
   res, err := yaml.Marshal(alldata)
   if err != nil { return err }
