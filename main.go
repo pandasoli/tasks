@@ -109,11 +109,89 @@ func main() {
         selected.Task = 0
       }
     },
+    "MoveUp": func() {
+      escope := &escopes[selected.Escope]
+      task := (*escope).Tasks[selected.Task]
+
+      // Local move
+      if selected.Task > 0 {
+        new_tasks := make([]Task, 0, len(escope.Tasks))
+        new_tasks = append(new_tasks, escope.Tasks[:selected.Task]...)
+        new_tasks = append(new_tasks, escope.Tasks[selected.Task + 1:]...)
+
+        escope.Tasks = new_tasks
+
+        new_tasks = make([]Task, 0, len(escope.Tasks))
+        new_tasks = append(new_tasks, escope.Tasks[:selected.Task - 1]...)
+        new_tasks = append(new_tasks, task)
+        new_tasks = append(new_tasks, escope.Tasks[selected.Task - 1:]...)
+
+        escope.Tasks = new_tasks
+
+        selected.Task--
+      } else if selected.Escope > 0 {
+        escope.Tasks = append(escope.Tasks[1:])
+        escopes[selected.Escope - 1].Tasks = append(escopes[selected.Escope - 1].Tasks, task)
+
+        selected.Task = len(escopes[selected.Escope - 1].Tasks) - 1
+        selected.Escope--
+      }
+    },
+    "MoveDown": func() {
+      escope := &escopes[selected.Escope]
+      task := (*escope).Tasks[selected.Task]
+
+      // Local move
+      if selected.Task < len(escope.Tasks) - 1 {
+        new_tasks := make([]Task, 0, len(escope.Tasks))
+        new_tasks = append(new_tasks, escope.Tasks[:selected.Task]...)
+        new_tasks = append(new_tasks, escope.Tasks[selected.Task + 1:]...)
+
+        escope.Tasks = new_tasks
+
+        new_tasks = make([]Task, 0, len(escope.Tasks))
+        new_tasks = append(new_tasks, escope.Tasks[:selected.Task + 1]...)
+        new_tasks = append(new_tasks, task)
+        new_tasks = append(new_tasks, escope.Tasks[selected.Task + 1:]...)
+
+        escope.Tasks = new_tasks
+
+        selected.Task++
+      } else if len(escopes) - 1 > selected.Escope {
+        escope.Tasks = append(escope.Tasks[:len(escope.Tasks) - 1])
+        escopes[selected.Escope + 1].Tasks = append([]Task { task }, escopes[selected.Escope + 1].Tasks...)
+
+        selected.Escope++
+        selected.Task = 0
+      }
+    },
     "CheckTask": func() {
       if len(escopes) == 0 { return }
 
       task := &escopes[selected.Escope].Tasks[selected.Task]
       task.Done = !task.Done
+
+      goterm.HideCursor()
+      task_y := GetTaskY(escopes, initial_y, selected.Escope, selected.Task)
+      animation_time := time.Duration(30)
+
+      if len(task.Title) >= 30 {
+        animation_time = time.Duration(10)
+      }
+
+      for i := range task.Title {
+        style := ""
+
+        if task.Done {
+          style = "\033[9m"
+        }
+
+        goterm.GoToXY(9 + i, task_y)
+        fmt.Printf("%s%c\033[0m", style, task.Title[i])
+        time.Sleep(time.Millisecond * animation_time)
+      }
+
+      goterm.ShowCursor()
     },
     "DeleteTask": func() {
       if len(escopes) == 0 { return }
@@ -249,6 +327,9 @@ func main() {
     switch str {
       case "\033[A" /* Up arrow */: Features["GoUp"]()
       case "\033[B" /* Down arrow */: Features["GoDown"]()
+
+      case "\033[1;5A" /* Ctrl + Up arrow */: Features["MoveUp"]()
+      case "\033[1;5B" /* Ctrl + Down arrow */: Features["MoveDown"]()
 
       case "q": quit = true
       case "d": Features["DeleteTask"]()

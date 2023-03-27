@@ -11,7 +11,7 @@ import (
 func GetNeededSpace(escopes []Escope) int {
   var needed_h int
 
-  needed_h += len(escopes) // Escopes' title
+  needed_h += len(escopes) - 1 // Escopes' title
   needed_h += 2 // Y space
 
   for _, escope := range escopes {
@@ -35,11 +35,6 @@ func MakeSpace(escopes []Escope, initial_y *int) error {
 
   if needed_h > had_space {
     missing_space := needed_h - had_space
-
-    // goterm.GoToXY(0, *initial_y)
-    // for range make([]int, had_space) {
-    //   fmt.Println()
-    // }
 
     goterm.GoToXY(0, h)
     for range make([]int, missing_space) {
